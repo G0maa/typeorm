@@ -4,14 +4,42 @@ on:
   push:
     branches:
       - master
+      - fix/typesense
 
 jobs:
   index-docs:
-    if: ${{ !github.event.repository.fork }}
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v5
+
+      - name: Set Typesense env
+        run: |
+          echo "TYPESENSE_API_KEY=${{ secrets.TYPESENSE_API_KEY }}" >> $GITHUB_ENV
+          echo "TYPESENSE_HOST=${{ secrets.TYPESENSE_HOST }}" >> $GITHUB_ENV
+          echo "TYPESENSE_PROTOCOL=https" >> $GITHUB_ENV
+          echo "TYPESENSE_PORT=443" >> $GITHUB_ENV
+
+      - name: Delete unaliased collections
+        run: |
+          # Get the collection currently pointed to by the alias
+          ALIAS_COLLECTION=$(curl -s -H "X-TYPESENSE-API-KEY: $TYPESENSE_API_KEY" \
+            "$TYPESENSE_PROTOCOL://$TYPESENSE_HOST:$TYPESENSE_PORT/aliases/typeorm-docs" \
+            | jq -r '.collection_name')
+
+          # Get all collections
+          COLLECTIONS=$(curl -s -H "X-TYPESENSE-API-KEY: $TYPESENSE_API_KEY" \
+            "$TYPESENSE_PROTOCOL://$TYPESENSE_HOST:$TYPESENSE_PORT/collections" \
+            | jq -r '.[].name')
+
+          # Delete collections not connected to the alias
+          for col in $COLLECTIONS; do
+            if [ "$col" != "$ALIAS_COLLECTION" ]; then
+              echo "Deleting unaliased collection: $col"
+              curl -s -X DELETE -H "X-TYPESENSE-API-KEY: $TYPESENSE_API_KEY" \
+                "$TYPESENSE_PROTOCOL://$TYPESENSE_HOST:$TYPESENSE_PORT/collections/$col"
+            fi
+          done
 
       - run: |
           docker run \
