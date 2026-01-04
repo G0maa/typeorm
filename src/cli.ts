@@ -4,7 +4,6 @@ import yargs from "yargs"
 import { hideBin } from "yargs/helpers"
 import { CacheClearCommand } from "./commands/CacheClearCommand"
 import { EntityCreateCommand } from "./commands/EntityCreateCommand"
-import { InitCommand } from "./commands/InitCommand"
 import { MigrationCreateCommand } from "./commands/MigrationCreateCommand"
 import { MigrationGenerateCommand } from "./commands/MigrationGenerateCommand"
 import { MigrationRevertCommand } from "./commands/MigrationRevertCommand"
@@ -22,7 +21,6 @@ yargs(hideBin(process.argv))
     .usage("Usage: $0 <command> [options]")
     .command(new CacheClearCommand())
     .command(new EntityCreateCommand())
-    .command(new InitCommand())
     .command(new MigrationCreateCommand())
     .command(new MigrationGenerateCommand())
     .command(new MigrationRevertCommand())
